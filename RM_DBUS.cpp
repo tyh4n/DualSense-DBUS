@@ -29,7 +29,7 @@ void RM_DBUS::begin() {
 
 void RM_DBUS::write_channel(uint8_t ch, int16_t data) {
   if ((ch > 0) && (ch <= 12)) {
-    data = constrain(data, 0, 2048); // Keep within min/max values
+    data = constrain(data, 0, 2047); // Keep within min/max values
     channel[ch - 1] = data; // Expects a non-zero starting index to the channel
   }
 }
@@ -46,25 +46,25 @@ void RM_DBUS::update() {
    *
    * | Channel Index | Description               | dbus_data Mapping                         |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[0]    | rc.ch0 (Roll/Throttle)    | dbus_data[0] = ch0[7:0]                   |
-   * |               |                           | dbus_data[1] = ch0[10:8] (bits 0–2)       |
+   * | channel[0]    | rc.ch0 (Throttle)         | dbus_data[0] = ch0[7:0]                   |
+   * |               |                           | dbus_data[1] = ch0[10:8]                  |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[1]    | rc.ch1 (Pitch/Yaw)        | dbus_data[1] |= ch1[2:0] << 3 (bits 3–5)  |
-   * |               |                           | dbus_data[2] = ch1[7:3] (bits 0–4)        |
+   * | channel[1]    | rc.ch1 (Yaw)              | dbus_data[1] |= ch1[4:0] << 3             |
+   * |               |                           | dbus_data[2] = ch1[10:5]                  |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[2]    | rc.ch2 (Auxiliary)        | dbus_data[2] |= ch2[1:0] << 6 (bits 6–7)  |
-   * |               |                           | dbus_data[3] = ch2[9:2] (bits 0–7)        |
-   * |               |                           | dbus_data[4] = ch2[10] (bit 0)            |
+   * | channel[2]    | rc.ch2 (Pitch)            | dbus_data[2] |= ch2[1:0] << 6             |
+   * |               |                           | dbus_data[3] = ch2[9:2]                   |
+   * |               |                           | dbus_data[4] = ch2[10]                    |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[3]    | rc.ch3 (Auxiliary)        | dbus_data[4] |= ch3[0] << 1 (bit 1)       |
-   * |               |                           | dbus_data[5] = ch3[7:1] (bits 0–6)        |
+   * | channel[3]    | rc.ch3 (Roll)             | dbus_data[4] |= ch3[6:0] << 1             |
+   * |               |                           | dbus_data[5] = ch3[10:7]                  |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[4]    | rc.s1 (Switch 1)          | dbus_data[5] |= s1 << 6 (bits 6–7)        |
+   * | channel[4]    | rc.s1 (3 way switch 1     | dbus_data[5] |= s1 << 4                   |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[5]    | rc.s2 (Switch 2)          | dbus_data[5] |= s2 << 4 (bits 4–5)        |
+   * | channel[5]    | rc.s2 (3 way switch 2     | dbus_data[5] |= s2 << 6                   |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[6]    | rc.wheel (Wheel/Dial)     | dbus_data[16] = wheel[7:0]                |
-   * |               |                           | dbus_data[17] = wheel[10:8] (bits 0–2)    |
+   * | channel[6]    | rc.wheel (Wheel)          | dbus_data[16] = wheel[7:0]                |
+   * |               |                           | dbus_data[17] = wheel[10:8]               |
    * |---------------|---------------------------|-------------------------------------------|
    * | channel[7]    | mouse.x (Mouse X-axis)    | dbus_data[6] = mouse_x[7:0]               |
    * |               |                           | dbus_data[7] = mouse_x[15:8]              |
@@ -75,65 +75,65 @@ void RM_DBUS::update() {
    * | channel[9]    | mouse.z (Mouse Z-axis)    | dbus_data[10] = mouse_z[7:0]              |
    * |               |                           | dbus_data[11] = mouse_z[15:8]             |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[10]   | mouse_left (Left Button)  | dbus_data[12] = mouse_left (bit 0)        |
+   * | channel[10]   | mouse_left                | dbus_data[12] = mouse_left                |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[11]   | mouse_right (Right Button)| dbus_data[13] = mouse_right (bit 0)       |
+   * | channel[11]   | mouse_right               | dbus_data[13] = mouse_right               |
    * |---------------|---------------------------|-------------------------------------------|
-   * | channel[12]   | keyboard_code (Key Code)  | dbus_data[14] = keyboard_code[7:0]        |
+   * | channel[12]   | keyboard_code             | dbus_data[14] = keyboard_code[7:0]        |
    * |               |                           | dbus_data[15] = keyboard_code[15:8]       |
    */
 
   // Convert rc.ch0 to dbus_data[0] and dbus_data[1]
   int16_t ch0 = static_cast<int16_t>(channel[0]);
-  dbus_data[0] = ch0 & 0xFF; // Lower 8 bits
-  dbus_data[1] = (ch0 >> 8) & 0x07; // Upper 3 bits
+  dbus_data[0] = ch0 & 0xFF; 
+  dbus_data[1] = (ch0 >> 8) & 0x07; 
 
   // Convert rc.ch1 to dbus_data[1] and dbus_data[2]
   int16_t ch1 = static_cast<int16_t>(channel[1]);
-  dbus_data[1] |= (ch1 << 3) & 0xF8; // Bits 3–5
-  dbus_data[2] = (ch1 >> 5) & 0x1F; // Lower 5 bits
+  dbus_data[1] |= (ch1 << 3) & 0xF8; 
+  dbus_data[2] = (ch1 >> 5) & 0x1F; 
 
   // Convert rc.ch2 to dbus_data[2], dbus_data[3], and dbus_data[4]
   int16_t ch2 = static_cast<int16_t>(channel[2]);
-  dbus_data[2] |= (ch2 << 6) & 0xC0; // Bits 6–7
-  dbus_data[3] = (ch2 >> 2) & 0xFF; // Middle 8 bits
-  dbus_data[4] = (ch2 >> 10) & 0x01; // Upper 1 bit
+  dbus_data[2] |= (ch2 << 6) & 0xC0; 
+  dbus_data[3] = (ch2 >> 2) & 0xFF; 
+  dbus_data[4] = (ch2 >> 10) & 0x01; 
 
   // Convert rc.ch3 to dbus_data[4] and dbus_data[5]
   int16_t ch3 = static_cast<int16_t>(channel[3]);
-  dbus_data[4] |= (ch3 << 1) & 0xFE; // Bit 1
-  dbus_data[5] = (ch3 >> 7) & 0x7F; // Lower 7 bits
+  dbus_data[4] |= (ch3 << 1) & 0xFE; 
+  dbus_data[5] = (ch3 >> 7) & 0x0F; 
 
   // Convert rc.s1 and rc.s2 to dbus_data[5]
-  dbus_data[5] |= (static_cast<uint8_t>(channel[4]) << 6) & 0xC0; // rc.s1 (bits 6–7)
-  dbus_data[5] |= (static_cast<uint8_t>(channel[5]) << 4) & 0x30; // rc.s2 (bits 4–5)
+  dbus_data[5] |= (static_cast<uint8_t>(channel[4]) << 4) & 0x30; 
+  dbus_data[5] |= (static_cast<uint8_t>(channel[5]) << 6) & 0xc0; 
 
   // Convert rc.wheel to dbus_data[16] and dbus_data[17]
   int16_t wheel = static_cast<int16_t>(channel[6]);
-  dbus_data[16] = wheel & 0xFF; // Lower 8 bits
-  dbus_data[17] = (wheel >> 8) & 0x07; // Upper 3 bits
+  dbus_data[16] = wheel & 0xFF; 
+  dbus_data[17] = (wheel >> 8) & 0x07; 
 
   // Convert mouse.x to dbus_data[6] and dbus_data[7]
   int16_t mouse_x = static_cast<int16_t>(channel[7]);
-  dbus_data[6] = mouse_x & 0xFF; // Lower 8 bits
-  dbus_data[7] = (mouse_x >> 8) & 0xFF; // Upper 8 bits
+  dbus_data[6] = mouse_x & 0xFF; 
+  dbus_data[7] = (mouse_x >> 8) & 0xFF; 
 
   // Convert mouse.y to dbus_data[8] and dbus_data[9]
   int16_t mouse_y = static_cast<int16_t>(channel[8]);
-  dbus_data[8] = mouse_y & 0xFF; // Lower 8 bits
-  dbus_data[9] = (mouse_y >> 8) & 0xFF; // Upper 8 bits
+  dbus_data[8] = mouse_y & 0xFF; 
+  dbus_data[9] = (mouse_y >> 8) & 0xFF; 
 
   // Convert mouse.z to dbus_data[10] and dbus_data[11]
   int16_t mouse_z = static_cast<int16_t>(channel[9]);
-  dbus_data[10] = mouse_z & 0xFF; // Lower 8 bits
-  dbus_data[11] = (mouse_z >> 8) & 0xFF; // Upper 8 bits
+  dbus_data[10] = mouse_z & 0xFF; 
+  dbus_data[11] = (mouse_z >> 8) & 0xFF; 
 
   // Convert mouse_left and mouse_right to dbus_data[12] and dbus_data[13]
-  dbus_data[12] = static_cast<uint8_t>(channel[10]); // Mouse left button
-  dbus_data[13] = static_cast<uint8_t>(channel[11]); // Mouse right button
+  dbus_data[12] = static_cast<uint8_t>(channel[10]); 
+  dbus_data[13] = static_cast<uint8_t>(channel[11]); 
 
   // Convert keyboard_code to dbus_data[14] and dbus_data[15]
   uint16_t key_code = static_cast<uint16_t>(channel[12]);
-  dbus_data[14] = key_code & 0xFF; // Lower 8 bits
-  dbus_data[15] = (key_code >> 8) & 0xFF; // Upper 8 bits
+  dbus_data[14] = key_code & 0xFF; 
+  dbus_data[15] = (key_code >> 8) & 0xFF; 
 }
