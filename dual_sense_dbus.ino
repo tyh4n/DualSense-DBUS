@@ -1,12 +1,14 @@
-// Include the BMC_SBUS library
-#include <BMC_SBUS.h>
+// Include library
+// #include <BMC_SBUS.h>
+#include <RM_DBUS.h>
 #include <ps5Controller.h>
 
-//Declare BMC_SBUS Object
-BMC_SBUS mySBUS;
+//Declare BMC_SBUS/RM_DBUS Object
+// BMC_SBUS SBUS;
+RM_DBUS DBUS;
 
 // Sbus delay value
-const int sbusWAIT = 7;      //frame timing delay in msecs
+const int busWAIT = 7;      //frame timing delay in msecs
 
 // Declare sbus control channels
 int panChannel = 1;
@@ -14,8 +16,9 @@ int tiltChannel = 2;
 int rollChannel = 4;
 
 void setup() {
-  // Start BMC_SBUS object
-  mySBUS.begin();
+  // Start BMC_SBUS/RM_DBUS object
+  // SBUS.begin();
+  DBUS.begin();
 
   // Start serial
   Serial.begin(115200);
@@ -74,22 +77,30 @@ void loop() {
       }
       Serial.println();
 
-      // Map dualsense values which go from -128-128 to Sbus values 0-2047
+      // Map dualsense values which go from -128 to 128 to Sbus values 0-2047
       // For no move send 1023
-      int sendValueY = map(ps5.LStickX(),0,255,0,2047);
-      int sendValueX = map(ps5.LStickY(),0,255,0,2047);
-      int sendValueZ = map(ps5.RStickX(),0,255,0,2047);
+      int ch_yaw = map(ps5.LStickX(),-128,128,0,2047);
+      int ch_throttle = map(ps5.LStickY(),-128,128,0,2047);
+      int ch_roll = map(ps5.RStickX(),-128,128,0,2047);
+      int ch_pitch = map(ps5.RStickY(),-128,128,0,2047);
 
-      // Set sbus tilt
-      mySBUS.Servo(tiltChannel,sendValueY);
-      mySBUS.Servo(rollChannel,sendValueX);         
-      mySBUS.Servo(panChannel,sendValueZ);
+      // Set SBUS/DBUS tilt
+      // SBUS.Servo(tiltChannel,sendValueY);
+      // SBUS.Servo(rollChannel,sendValueX);         
+      // SBUS.Servo(panChannel,sendValueZ);
+      DBUS.write_channel(1, ch_throttle);
+      DBUS.write_channel(2, ch_yaw);
+      DBUS.write_channel(3, ch_pitch);
+      DBUS.write_channel(4, ch_roll);
 
-      // Update SBUS object and send data
-      mySBUS.Update();
-      mySBUS.Send();
-      // Delay for SBUS
-      delay(sbusWAIT);
+      // Update SBUS/DBUS object and send data
+      // SBUS.Update();
+      // SBUS.Send();
+      DBUS.update();
+      DBUS.send();
+
+      // Delay for BUS
+      delay(busWAIT);
 
       // This delay is to make the output more human readable
       // Remove it when you're not trying to see the output
