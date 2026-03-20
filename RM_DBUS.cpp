@@ -91,7 +91,7 @@ void RM_DBUS::update() {
   // Convert rc.ch1 to dbus_data[1] and dbus_data[2]
   int16_t ch1 = static_cast<int16_t>(channel[1]);
   dbus_data[1] |= (ch1 << 3) & 0xF8; 
-  dbus_data[2] = (ch1 >> 5) & 0x1F; 
+  dbus_data[2] = (ch1 >> 5) & 0x3F; 
 
   // Convert rc.ch2 to dbus_data[2], dbus_data[3], and dbus_data[4]
   int16_t ch2 = static_cast<int16_t>(channel[2]);

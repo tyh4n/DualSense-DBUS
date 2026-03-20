@@ -8,7 +8,7 @@
 RM_DBUS DBUS;
 
 // Sbus delay value
-const int busWAIT = 7;      //frame timing delay in msecs
+const int busWAIT = 14;      //frame timing delay in msecs
 
 // Declare sbus control channels
 int panChannel = 1;
@@ -29,6 +29,38 @@ void setup() {
 }
 
 void loop() {
+  if (ps5.isConnected() == true) {
+    // Controller is connected: map real DualSense values
+    // Map dualsense values which go from -128 to 128 to DBUS values 0-2047
+    int ch_yaw = map(ps5.LStickX(), -128, 128, 0, 2047);
+    int ch_throttle = map(ps5.LStickY(), -128, 128, 0, 2047);
+    int ch_roll = map(ps5.RStickX(), -128, 128, 0, 2047);
+    int ch_pitch = map(ps5.RStickY(), -128, 128, 0, 2047);
+
+    DBUS.write_channel(1, ch_throttle);
+    DBUS.write_channel(2, ch_yaw);
+    DBUS.write_channel(3, ch_pitch);
+    DBUS.write_channel(4, ch_roll);
+    
+    // (You can also map your buttons to the DBUS mouse/keyboard channels here)
+    
+  } else {
+    // Controller disconnected: Send neutral failsafe values (1024 is center)
+    DBUS.write_channel(1, 1024);
+    DBUS.write_channel(2, 1024);
+    DBUS.write_channel(3, 1024);
+    DBUS.write_channel(4, 1024);
+  }
+
+  // Update DBUS object and send data REGARDLESS of connection status
+  DBUS.update();
+  DBUS.send();
+
+  // Crucial: The 7ms delay creates the precise silent gap the STM32 needs to synchronize!
+  delay(busWAIT); 
+}
+
+/* void loop() {
     while (ps5.isConnected() == true) {
       if (ps5.Right()) Serial.println("Right Button");
       if (ps5.Down()) Serial.println("Down Button");
@@ -106,4 +138,4 @@ void loop() {
       // Remove it when you're not trying to see the output
       delay(300);
     }
-}
+} */
